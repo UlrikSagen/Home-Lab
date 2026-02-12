@@ -2,6 +2,6 @@ package systemstatus.gto;
 
 public record NvmeStatusGto(
     double nvmeTempC,
-    double presentageUsed,
+    double percentageWear,
     int criticalWarning
 ) {}
