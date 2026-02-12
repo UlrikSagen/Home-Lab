@@ -60,11 +60,11 @@ public class SystemStatusService {
 
         boolean isThrottled = false;
         String hexString = res.stdout();
-        if (hexString.startsWith("throttled=0x") || hexString.startsWith("0X")) {
-            hexString = hexString.substring(2);
+        if (hexString.startsWith("throttled=0x")) {
+            hexString = hexString.substring(("throttled=0x").length()).strip();
         }
         try{
-            int decimalValue = Integer.parseInt(hexString, 16);
+            int decimalValue = Integer.parseInt(hexString);
             isThrottled = (decimalValue != 0);
         } catch(NumberFormatException e){
             log.error("isThrottled() failed", e);
