@@ -19,7 +19,7 @@ public class SystemStatusController {
 
     @GetMapping("/status")
     public SystemStatusGto status() throws Exception {
-        return new SystemStatusGto(service.getCpu(), service.getNvme(), service.getMemory(), service.getDisks());
+        return new SystemStatusGto(service.getCpu(), service.getNvme(), service.getMemory(), service.getDisks(), service.getKernel());
     }
 
     @GetMapping("/cpu")
@@ -40,5 +40,10 @@ public class SystemStatusController {
     @GetMapping("/disks")
     public List<DiskStatusGto> getDisks() throws Exception{
         return service.getDisks();
+    }
+
+    @GetMapping("/kernel")
+    public KernelStatusGto getKernel() throws Exception{
+        return service.getKernel();
     }
 }

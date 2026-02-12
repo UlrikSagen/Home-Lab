@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import systemstatus.gto.CpuStatusGto;
 import systemstatus.gto.DiskStatusGto;
+import systemstatus.gto.KernelStatusGto;
 import systemstatus.gto.MemoryStatusGto;
 import systemstatus.gto.NvmeStatusGto;
 import systemstatus.util.CommandRunner;
@@ -52,13 +53,8 @@ public class SystemStatusService {
             hexString = hexString.substring(2);
         }
         try{
-            int decimalValue = Integer.parseInt(hexString);
-            if (decimalValue == 0){
-                isThrottled = false;
-            }
-            else{
-                isThrottled = true;
-            }
+            int decimalValue = Integer.parseInt(hexString, 16);
+            isThrottled = (decimalValue != 0);
         } catch(NumberFormatException e){
             //Log error
         }
@@ -135,13 +131,13 @@ public class SystemStatusService {
             String[] parts = line.trim().split("\\s+");
 
             if (line.startsWith("MemTotal:")){
-                memTotalMb = Long.parseLong(parts[1]);
+                memTotalMb = Long.parseLong(parts[1])/1024;
             } else if ( line.startsWith("MemAvailable:")){
-                memAvailableMb = Long.parseLong(parts[1]);
+                memAvailableMb = Long.parseLong(parts[1])/1024;
             } else if ( line.startsWith("SwapTotal:")){
-                swapTotalMb = Long.parseLong(parts[1]);
+                swapTotalMb = Long.parseLong(parts[1])/1024;
             } else if ( line.startsWith("SwapFree:")){
-                swapFreeMb = Long.parseLong(parts[1]);
+                swapFreeMb = Long.parseLong(parts[1])/1024;
             }
         }
 
@@ -167,5 +163,14 @@ public class SystemStatusService {
             }
         }
         return disks;
+    }
+
+    public KernelStatusGto getKernel() throws IOException {
+        String osType = Files.readString(Path.of("/proc/sys/kernel/ostype")).trim();
+        String version = Files.readString(Path.of("/proc/sys/kernel/osrelease")).trim();
+        String arch = Files.readString(Path.of("/proc/sys/kernel/arch")).trim();
+        String hostName = Files.readString(Path.of("/proc/sys/kernel/hostname")). trim();
+    
+        return new KernelStatusGto(osType + " " + version, arch, hostName);
     }
 }
