@@ -46,4 +46,9 @@ public class SystemStatusController {
     public KernelStatusGto getKernel() throws Exception{
         return service.getKernel();
     }
+
+    @GetMapping("/docker")
+    public List<DockerStatusGto> getDockerContainers() throws Exception{
+        return service.getDockerContainers();
+    }
 }

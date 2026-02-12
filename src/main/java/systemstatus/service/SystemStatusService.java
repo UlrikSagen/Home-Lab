@@ -11,10 +11,13 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import systemstatus.gto.CpuStatusGto;
 import systemstatus.gto.DiskStatusGto;
+import systemstatus.gto.DockerStatusGto;
 import systemstatus.gto.KernelStatusGto;
 import systemstatus.gto.MemoryStatusGto;
 import systemstatus.gto.NvmeStatusGto;
@@ -26,6 +29,11 @@ public class SystemStatusService {
     private static final Path TEMP_PATH = Path.of("/sys/class/thermal/thermal_zone0/temp");
     private static final Path MEM_PATH = Path.of("/proc/meminfo");
 
+    private static final Path OS_TYPE_PATH = Path.of("/proc/sys/kernel/ostype");
+    private static final Path OS_VERSION_PATH = Path.of("/proc/sys/kernel/osrelease");
+    private static final Path ARCH_PATH = Path.of("/proc/sys/kernel/arch");
+    private static final Path HOSTNAME_PATH = Path.of("/proc/sys/kernel/hostname");
+
     private static final Pattern NVME_TEMP_PATTERN = Pattern.compile("temperature\\s*:\\s*([\\d.]+)");
     private static final Pattern NVME_PERCENTAGE_PATTERN = Pattern.compile("percentage_used\\s*:\\s*([\\d.]+)%?");
     private static final Pattern NVME_WARNING_PATTERN = Pattern.compile("critical_warning\\s*:\\s*(\\d+)");
@@ -35,6 +43,9 @@ public class SystemStatusService {
     private static final int IDLE_INDEX = 11;
 
     private static final List<String> MOUNT_POINTS = List.of("/", "/srv");
+
+    private static final Logger log = LoggerFactory.getLogger(SystemStatusService.class);
+
 
     public double getTemp() throws IOException, FileNotFoundException{
         String temp = Files.readString(TEMP_PATH).trim();
@@ -56,7 +67,7 @@ public class SystemStatusService {
             int decimalValue = Integer.parseInt(hexString, 16);
             isThrottled = (decimalValue != 0);
         } catch(NumberFormatException e){
-            //Log error
+            log.error("isThrottled() failed", e);
         }
         return isThrottled;
     }
@@ -93,7 +104,7 @@ public class SystemStatusService {
                 try{
                     nvmeTempC = Double.parseDouble(tempMatcher.group(1));                
                 } catch(NumberFormatException e){
-                    //Log error
+                    log.error("getNvme() failed", e);
                 }
             }
         }
@@ -115,7 +126,7 @@ public class SystemStatusService {
                     sys = Double.parseDouble(parts[SYS_INDEX]);
                     idle = Double.parseDouble(parts[IDLE_INDEX]);
                 } catch(NumberFormatException e){
-                    //Log error
+                    log.error("getCpu() failed", e);
                 }
             }
         }
@@ -159,18 +170,41 @@ public class SystemStatusService {
                 disks.add(new DiskStatusGto(path, total / (1024*1024*1024),used / (1024*1024*1024),(int)((used * 100.0) / total)
             ));
             } catch(IOException e){
-                //Log error
+                log.error("getDisks() failed", e);
+
             }
         }
         return disks;
     }
 
     public KernelStatusGto getKernel() throws IOException {
-        String osType = Files.readString(Path.of("/proc/sys/kernel/ostype")).trim();
-        String version = Files.readString(Path.of("/proc/sys/kernel/osrelease")).trim();
-        String arch = Files.readString(Path.of("/proc/sys/kernel/arch")).trim();
-        String hostName = Files.readString(Path.of("/proc/sys/kernel/hostname")). trim();
+        String osType = Files.readString(OS_TYPE_PATH).trim();
+        String version = Files.readString(OS_VERSION_PATH).trim();
+        String arch = Files.readString(ARCH_PATH).trim();
+        String hostName = Files.readString(HOSTNAME_PATH). trim();
     
         return new KernelStatusGto(osType + " " + version, arch, hostName);
+    }
+
+    public List<DockerStatusGto> getDockerContainers() throws IOException, InterruptedException{
+        List<DockerStatusGto> containers = new ArrayList<>();
+        var res = CommandRunner.run(List.of("sudo", "-n", "docker", "ps", "--format", "{{.Names}}|{{.Id}}|{{.Image}}|{{.Status}}|{{.RunningFor}}"), Duration.ofSeconds(5));
+        if (res.timedOut()) throw new RuntimeException("nvme timed out");
+        if (res.exitCode() != 0) {
+            throw new RuntimeException("dockerStatus failed: " + res.stderr());
+        }
+        for(String line : res.stdout().lines().filter(l -> !l.isBlank()).toList()){
+            String[] parts = line.split("\\|");
+            if (parts.length == 5){
+                containers.add(new DockerStatusGto(
+                    parts[0], //NAME
+                    parts[1], //ID
+                    parts[2], //IMAGE
+                    parts[3], //STATUS
+                    parts[4]  //RUNNING_FOR
+                ));
+            }
+        }
+        return containers;
     }
 }
