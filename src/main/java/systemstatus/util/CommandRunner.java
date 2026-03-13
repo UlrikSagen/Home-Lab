@@ -37,6 +37,7 @@ public final class CommandRunner {
         tErr.join();
 
         return new Result(finished ? p.exitValue() : -1, out.toString(), err.toString(), !finished);
+        
     }
 
     private static void readAll(InputStream is, StringBuilder sb) {

@@ -42,7 +42,7 @@ public class SystemStatusService {
     private static final int SYS_INDEX = 4;
     private static final int IDLE_INDEX = 11;
 
-    private static final List<String> MOUNT_POINTS = List.of("/", "/srv");
+    private static final List<String> MOUNT_POINTS = List.of("/", "/srv", "/mnt/backup");
 
     private static final Logger log = LoggerFactory.getLogger(SystemStatusService.class);
 
@@ -188,10 +188,10 @@ public class SystemStatusService {
 
     public List<DockerStatusGto> getDockerContainers() throws IOException, InterruptedException{
         List<DockerStatusGto> containers = new ArrayList<>();
-        var res = CommandRunner.run(List.of("sudo", "-n", "docker", "ps", "--format", "{{.Names}}|{{.Id}}|{{.Image}}|{{.Status}}|{{.RunningFor}}"), Duration.ofSeconds(5));
+        var res = CommandRunner.run(List.of("sudo", "-n", "docker", "ps", "--format", "{{.Names}}|{{.ID}}|{{.Image}}|{{.Status}}|{{.RunningFor}}"), Duration.ofSeconds(5));
         if (res.timedOut()) throw new RuntimeException("nvme timed out");
         if (res.exitCode() != 0) {
-            throw new RuntimeException("dockerStatus failed: " + res.stderr());
+            throw new RuntimeException("getDockerStatus() failed: " + res.stderr());
         }
         for(String line : res.stdout().lines().filter(l -> !l.isBlank()).toList()){
             String[] parts = line.split("\\|");
