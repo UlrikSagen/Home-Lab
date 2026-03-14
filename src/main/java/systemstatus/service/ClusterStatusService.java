@@ -33,6 +33,13 @@ public class ClusterStatusService {
     public ClusterStatusGto clusterStatus(){
         List<NodeStatusGto> nodes = new ArrayList<>();
 
+        try{
+            SystemStatusGto local = service.getStatus();
+            nodes.add(new NodeStatusGto("http://192.168.50.5", local, true));
+        }catch(Exception e){
+            nodes.add(new NodeStatusGto("http://192.168.50.5", null, false));
+            log.error(e.getMessage());
+        }
         for(String node : nodeList){
             try{
                 nodes.add(nodeStatus(node));
@@ -40,13 +47,6 @@ public class ClusterStatusService {
                 nodes.add(new NodeStatusGto(node, null, false));
                 log.error(e.getMessage());
             }
-        }
-        try{
-            SystemStatusGto local = service.getStatus();
-            nodes.add(new NodeStatusGto("127.0.0.1", local, true));
-        }catch(Exception e){
-            nodes.add(new NodeStatusGto("127.0.0.1", null, false));
-            log.error(e.getMessage());
         }
         return new ClusterStatusGto(nodes);
     }
