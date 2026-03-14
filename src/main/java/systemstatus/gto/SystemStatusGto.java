@@ -7,5 +7,6 @@ public record SystemStatusGto(
     NvmeStatusGto nvme,
     MemoryStatusGto memory,
     List<DiskStatusGto> disks,
-    KernelStatusGto kernel
+    KernelStatusGto kernel,
+    List<DockerStatusGto> dockers
 ){}

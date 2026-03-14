@@ -19,7 +19,7 @@ public class SystemStatusController {
 
     @GetMapping("/status")
     public SystemStatusGto status() throws Exception {
-        return new SystemStatusGto(service.getCpu(), service.getNvme(), service.getMemory(), service.getDisks(), service.getKernel());
+        return service.getStatus();
     }
 
     @GetMapping("/cpu")

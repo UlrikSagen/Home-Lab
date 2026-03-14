@@ -21,6 +21,7 @@ import systemstatus.gto.DockerStatusGto;
 import systemstatus.gto.KernelStatusGto;
 import systemstatus.gto.MemoryStatusGto;
 import systemstatus.gto.NvmeStatusGto;
+import systemstatus.gto.SystemStatusGto;
 import systemstatus.util.CommandRunner;
 
 @Service
@@ -44,6 +45,9 @@ public class SystemStatusService {
 
     private static final Logger log = LoggerFactory.getLogger(SystemStatusService.class);
 
+    public SystemStatusGto getStatus() throws Exception{
+        return new SystemStatusGto(getCpu(), getNvme(), getMemory(), getDisks(), getKernel(), getDockerContainers());
+    }
 
     public double getTemp() throws IOException, FileNotFoundException{
         String temp = Files.readString(TEMP_PATH).trim();
