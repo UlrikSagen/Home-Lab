@@ -18,7 +18,7 @@ public class HoneypotService {
 
     public HoneypotDashboardGto getDashboard() {
         return new HoneypotDashboardGto(getSummary(), getActiveSessions(), getRecentLogins(20), getRecentCommands(20), getTopIps(20),
-            getTopCredentials(20), getTopCommands(20), getHourlyActivity(48), getGeoData());
+            getTopCredentials(20), getTopCommands(20), getHourlyActivity(48), getGeoData(), getRecentTcpip(20), getRecentFileTransfers(20), getMalware(), getDestinations());
     }
 
     public HoneypotSummaryGto getSummary() {
@@ -212,5 +212,65 @@ public class HoneypotService {
             stats[0], stats[1], stats[2], stats[3],
             times[0], times[1],
             logins, commands, creds);
+    }
+
+    public List<TcpipEventGto> getRecentTcpip(int limit) {
+        return jdbc.query("""
+            SELECT t.timestamp, t.src_ip, t.dst_ip, t.dst_port, t.event_type,
+                   t.data, t.ja4h, g.country
+            FROM cowrie_tcpip t
+            LEFT JOIN ip_geo g ON t.src_ip = g.ip
+            ORDER BY t.timestamp DESC
+            LIMIT ?
+            """,
+            (rs, i) -> new TcpipEventGto(
+                rs.getString(1), rs.getString(2), rs.getString(3),
+                rs.getInt(4), rs.getString(5), rs.getString(6),
+                rs.getString(7), rs.getString(8)
+            ), limit);
+    }
+
+    public List<FileTransferGto> getRecentFileTransfers(int limit) {
+        return jdbc.query("""
+            SELECT f.timestamp, f.src_ip, f.event_type, f.filename,
+                   f.shasum, f.duplicate, g.country
+            FROM cowrie_file_transfers f
+            LEFT JOIN ip_geo g ON f.src_ip = g.ip
+            ORDER BY f.timestamp DESC
+            LIMIT ?
+            """,
+            (rs, i) -> new FileTransferGto(
+                rs.getString(1), rs.getString(2), rs.getString(3),
+                rs.getString(4), rs.getString(5), rs.getBoolean(6),
+                rs.getString(7)
+            ), limit);
+    }
+
+    public List<MalwareGto> getMalware() {
+        return jdbc.query("""
+            SELECT shasum, MIN(filename), COUNT(*) as count,
+                   COUNT(DISTINCT src_ip) as unique_ips
+            FROM cowrie_file_transfers
+            WHERE shasum IS NOT NULL
+            GROUP BY shasum
+            ORDER BY count DESC
+            """,
+            (rs, i) -> new MalwareGto(
+                rs.getString(1), rs.getString(2),
+                rs.getLong(3), rs.getLong(4)
+            ));
+    }
+
+    public List<DestinationGto> getDestinations() {
+        return jdbc.query("""
+            SELECT dst_ip, dst_port, COUNT(*) as count
+            FROM cowrie_tcpip
+            WHERE event_type = 'request'
+            GROUP BY dst_ip, dst_port
+            ORDER BY count DESC
+            """,
+            (rs, i) -> new DestinationGto(
+                rs.getString(1), rs.getInt(2), rs.getLong(3)
+            ));
     }
 }

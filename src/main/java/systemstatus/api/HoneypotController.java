@@ -69,4 +69,23 @@ public class HoneypotController {
         public IpDetailGto ipDetail(@PathVariable String ip) {
         return service.getIpDetail(ip);
     }
+    @GetMapping("/recent-tcpip")
+    public List<TcpipEventGto> recentTcpip(@RequestParam(defaultValue = "20") int limit) {
+        return service.getRecentTcpip(Math.min(limit, 100));
+    }
+
+    @GetMapping("/destinations")
+    public List<DestinationGto> topDestinations() {
+        return service.getDestinations();
+    }
+
+    @GetMapping("/recent-files")
+    public List<FileTransferGto> recentFiles(@RequestParam(defaultValue = "20") int limit) {
+        return service.getRecentFileTransfers(Math.min(limit, 100));
+    }
+
+    @GetMapping("/malware")
+    public List<MalwareGto> topMalware() {
+        return service.getMalware();
+    }
 }

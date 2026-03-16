@@ -11,5 +11,9 @@ public record HoneypotDashboardGto(
     List<CredentialGto> topCredentials,
     List<TopCommandGto> topCommands,
     List<ActivityGto> activity,
-    List<SourceIpGto> geo
+    List<SourceIpGto> geo,
+    List<TcpipEventGto> recentTcpip,
+    List<FileTransferGto> recentFiles,
+    List<MalwareGto> malware,
+    List<DestinationGto> destinations
 ) {}
