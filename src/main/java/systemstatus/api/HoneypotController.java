@@ -17,9 +17,17 @@ public class HoneypotController {
         this.service = service;
     }
 
+    @GetMapping("/dashboard")
+    public HoneypotDashboardGto dashboard() {
+        return service.getDashboard();
+    }
     @GetMapping("/summary")
     public HoneypotSummaryGto summary() {
         return service.getSummary();
+    }
+    @GetMapping("/active-sessions")
+    public List<ActiveSessionGto> activeSessions() {
+        return service.getActiveSessions();
     }
 
     @GetMapping("/recent-logins")
@@ -43,7 +51,7 @@ public class HoneypotController {
     }
 
     @GetMapping("/top-commands")
-    public List<TopCommandGto> topCommands(@RequestParam(defaultValue = "10") int limit) {
+    public List<TopCommandGto> topCommands(@RequestParam(defaultValue = "500") int limit) {
         return service.getTopCommands(Math.min(limit, 50));
     }
 
@@ -55,5 +63,10 @@ public class HoneypotController {
     @GetMapping("/geo")
     public List<SourceIpGto> geo() {
         return service.getGeoData();
+    }
+
+    @GetMapping("/ip/{ip}")
+        public IpDetailGto ipDetail(@PathVariable String ip) {
+        return service.getIpDetail(ip);
     }
 }
