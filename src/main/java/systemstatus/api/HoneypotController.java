@@ -80,7 +80,7 @@ public class HoneypotController {
     }
 
     @GetMapping("/recent-files")
-    public List<FileTransferGto> recentFiles(@RequestParam(defaultValue = "20") int limit) {
+    public List<FileTransferGto> recentFiles(@RequestParam(defaultValue = "100") int limit) {
         return service.getRecentFileTransfers(Math.min(limit, 100));
     }
 

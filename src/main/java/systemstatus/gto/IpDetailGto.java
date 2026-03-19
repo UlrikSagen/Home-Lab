@@ -17,5 +17,7 @@ public record IpDetailGto(
     String lastSeen,
     List<LoginAttemptGto> recentLogins,
     List<CommandGto> recentCommands,
-    List<CredentialGto> topCredentials
+    List<CredentialGto> topCredentials,
+    List<TcpipEventGto> recentTcpip,
+    List<FileTransferGto> recentFiles
 ) {}

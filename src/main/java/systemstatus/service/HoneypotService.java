@@ -208,10 +208,41 @@ public class HoneypotService {
             (rs, i) -> new CredentialGto(rs.getString(1), rs.getString(2), rs.getLong(3)),
             ip);
         
+        var recentFiles = jdbc.query("""
+            SELECT f.timestamp, f.src_ip, f.event_type, f.filename,
+                   f.shasum, f.duplicate, g.country
+            FROM cowrie_file_transfers f
+            LEFT JOIN ip_geo g ON f.src_ip = g.ip
+            WHERE f.src_ip = ?
+            ORDER BY f.timestamp DESC
+            """,
+            (rs, i) -> new FileTransferGto(
+                rs.getString(1), rs.getString(2), rs.getString(3),
+                rs.getString(4), rs.getString(5), rs.getBoolean(6),
+                rs.getString(7)
+            ), ip);
+
+        var recentTcpip = jdbc.query("""
+            SELECT t.timestamp, t.dst_ip, t.dst_port, t.event_type,
+            t.data, t.ja4h, g.country
+            FROM cowrie_tcpip t
+            LEFT JOIN ip_geo g ON t.src_ip = g.ip
+            WHERE t.src_ip = ?
+            ORDER BY t.timestamp DESC
+            """,
+            (rs, i) -> new TcpipEventGto(
+                rs.getString(1), ip, rs.getString(2),
+                rs.getInt(3), rs.getString(4), rs.getString(5),
+                rs.getString(6), rs.getString(7)
+            ), ip);
+    
+
         return new IpDetailGto(ip, country, countryCode, city, lat, lon,
             stats[0], stats[1], stats[2], stats[3],
             times[0], times[1],
-            logins, commands, creds);
+            logins, commands, creds,
+            recentTcpip, recentFiles);
+
     }
 
     public List<TcpipEventGto> getRecentTcpip(int limit) {
